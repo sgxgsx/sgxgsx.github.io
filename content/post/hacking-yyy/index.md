@@ -1,13 +1,13 @@
 ---
-title: Hello World
-description: Welcome to Hugo Theme Stack
-slug: hello-world
-date: 2022-03-06 00:00:00+0000
+title: Playing with SMS OTPs or a story behind a 17k bounty
+description: Accumulating entropy and guessing SMS OTPs to get access to PII.
+slug: playing-with-sms-otps
+date: 2025-02-01 00:00:00+0000
 image: cover.jpg
 categories:
-    - Example Category
+    - Bug Bounty
 tags:
-    - Example Tag
+    - Bug Bounty
 weight: 1       # You can add weight to some posts to override the default sorting (date descending)
 ---
 

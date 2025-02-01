@@ -1,6 +1,6 @@
 ---
-title: Example Category
-description: A description of this category
+title: Bug Bounty
+description: all posts related to bug bounty hunting
 image:
 
 # Badge style
