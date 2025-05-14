@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>CSRF on yso infosec blog</title><link>https://blog.ys0.dev/tags/csrf/</link><description>Recent content in CSRF on yso infosec blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 24 Feb 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://blog.ys0.dev/tags/csrf/index.xml" rel="self" type="application/rss+xml"/><item><title>Overlooked CORS Misconfiguration led to CSRF on Core Asset of Swisscom</title><link>https://blog.ys0.dev/p/cors-csrf-swisscom-attack/</link><pubDate>Mon, 24 Feb 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/cors-csrf-swisscom-attack/</guid><description>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/cover-cors.jpeg" alt="Featured image of post Overlooked CORS Misconfiguration led to CSRF on Core Asset of Swisscom" />&lt;p>I believe this vulnerability was overlooked by many hunters for quite some time even though it was in the core scope of a well-known bug bounty program that receives hundreds of reports per month.&lt;/p>
+&lt;p>The issue itself is fairly simple in essence. We have a domain that reflects the value of the request&amp;rsquo;s &lt;code>Origin&lt;/code> header into the &lt;code>Access-Control-Allow-Origin&lt;/code> response header. In addition to that, the endpoint returns the following headers:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Origin: https://evil.com
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Headers: Accept, Authorization, Cache-Control, Content-Type, Origin, Pragma, X-Api-Authorization, X-Cache-For, X-CSRF-Token, X-HTTP-Method-Override, X-Requested-With, Adrum, X-Add-Attributes, X-Add-Headers, X-Force-Accept-Language, X-Referer
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Expose-Headers: Content-Length, Content-Location, Content-Range, Content-Type, Link, Last-Modified, Location, X-CSRF-Token, X-Enabled, X-Linguist-Hash
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Credentials: true
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Methods: GET, POST, OPTIONS, HEAD, PATCH, DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In general, if &lt;code>Access-Control-Allow-Origin&lt;/code> is set to a specific domain and &lt;code>Access-Control-Allow-Credentials&lt;/code> is set to &lt;code>true&lt;/code>, then the website trusts this domain to carry out requests on behalf of the user (the browser includes user&amp;rsquo;s cookies). For detailed information about CORS, refer to &lt;a class="link" href="https://web.dev/articles/cross-origin-resource-sharing" target="_blank" rel="noopener"
+>web.dev&lt;/a> or &lt;a class="link" href="https://portswigger.net/web-security/cors" target="_blank" rel="noopener"
+>Portswigger&lt;/a>&lt;/p>
+&lt;h2 id="unexploitable-cors">&lt;strong>Unexploitable CORS&lt;/strong>
+&lt;/h2>&lt;p>At first, I created a quick Proof of Concept and tested it, but unfortunately, the browser didn’t send any cookies. Why?&lt;/p>
+&lt;p>The answer lies in how the authentication cookies were set. I examined the endpoint responsible for setting the cookie and it had the following attributes:&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/cookies.png"
+width="1166"
+height="190"
+loading="lazy"
+alt="Example of how the authentication cookie was set"
+class="gallery-image"
+data-flex-grow="613"
+data-flex-basis="1472px"
+>&lt;/p>
+&lt;p>The &lt;code>SameSite=Lax&lt;/code> attribute basically means that the authentication cookie is only sent when the request originates from a same-site context, with a few exceptions:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Lax+POST (2-minute window when the cookie is first set)&lt;/strong> – Not applicable here, as we are trying to exploit CORS, and the target uses CSRF tokens to protect against CSRF attacks. Additionally, the &lt;code>SameSite&lt;/code> flag is explicitly set, preventing &lt;code>Lax+POST&lt;/code> from working.&lt;/li>
+&lt;li>&lt;strong>Top-level navigation&lt;/strong> – Again, this does not help since we are trying to exploit CORS.&lt;/li>
+&lt;/ul>
+&lt;p>This is likely the point where many researchers gave up. However, there was still a way to exploit the issue - just not from an arbitrary domain. Instead, we needed access to a subdomain under the same site (&lt;code>.swisscom.ch&lt;/code>).&lt;/p>
+&lt;p>Finding an XSS vulnerability would typically require giving up a bounty or spending an unknown amount of time searching for one. Instead, I focused on something every security professional loves - &lt;strong>out-of-scope assets&lt;/strong>.&lt;/p>
+&lt;h2 id="chaining-the-exploit-with-xss">&lt;strong>Chaining the Exploit with XSS&lt;/strong>
+&lt;/h2>&lt;p>Fortunately, Swisscom has customer subdomains under &lt;code>.cust.swisscom.com&lt;/code>. With the help of Google Dork magic I identified an XSS within two minutes on the following site:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">site:cust.swisscom.ch inurl:search
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>With this, exploitation became straightforward:&lt;/p>
+&lt;ol>
+&lt;li>Get a user to visit our controlled subdomain.&lt;/li>
+&lt;li>Send a &lt;code>POST&lt;/code> request to the vulnerable XSS endpoint.&lt;/li>
+&lt;li>Inject JavaScript via XSS to send CORS requests and extract user data.&lt;/li>
+&lt;li>Profit.&lt;/li>
+&lt;/ol>
+&lt;p>Now, we could query all available user data from the target system.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/location.png"
+width="707"
+height="547"
+loading="lazy"
+alt="Query user’s token info"
+class="gallery-image"
+data-flex-grow="129"
+data-flex-basis="310px"
+>&lt;/p>
+&lt;h2 id="csrf-exposure">&lt;strong>CSRF Exposure&lt;/strong>
+&lt;/h2>&lt;p>Another crucial observation: the &lt;code>Access-Control-Expose-Headers&lt;/code> list included &lt;code>X-CSRF-Token&lt;/code>, which meant we could retrieve the user’s CSRF token. This allowed not only data exfiltration but also &lt;strong>modifying data&lt;/strong> via &lt;code>POST&lt;/code>, &lt;code>PATCH&lt;/code>, and &lt;code>DELETE&lt;/code> requests. In the end if the adversary happenned to attack a user with an Admin or SuperUser role they could leverage the CSRF to perform Account Takeovers via &lt;code>api/sc/set-email&lt;/code>.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/leak-info.png"
+width="1919"
+height="1510"
+loading="lazy"
+alt="Leak CSRF token"
+class="gallery-image"
+data-flex-grow="127"
+data-flex-basis="305px"
+>&lt;/p>
+&lt;h2 id="a-wormable-exploit">&lt;strong>A Wormable Exploit&lt;/strong>
+&lt;/h2>&lt;p>An interesting aspect of this platform is its &lt;strong>wormable properties&lt;/strong> when it comes to client-side issues like XSS. Users on the platform could chat with each other, and through CORS and CSRF exploitation, the payload could propagate itself across accounts.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/leak-message.png"
+width="1744"
+height="1426"
+loading="lazy"
+alt="Query or send messages"
+class="gallery-image"
+data-flex-grow="122"
+data-flex-basis="293px"
+>&lt;/p>
+&lt;h2 id="final-thoughts">&lt;strong>Final Thoughts&lt;/strong>
+&lt;/h2>&lt;p>Thinking beyond constraints and getting back to fundamentals is rather an important skill to hone. These approaches can lead to identifying something fairly simple lying on the surface which everyone else has overlooked.&lt;/p>
+&lt;h2 id="timeline">&lt;strong>Timeline&lt;/strong>
+&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>27.01.2025&lt;/strong> - Issue reported&lt;/li>
+&lt;li>&lt;strong>29.01.2025&lt;/strong> - Issue triaged&lt;/li>
+&lt;li>&lt;strong>07.02.2025&lt;/strong> - Issue fixed&lt;/li>
+&lt;li>&lt;strong>07.02.2025&lt;/strong> - Fix verified&lt;/li>
+&lt;li>&lt;strong>??.??.????&lt;/strong> - Awaiting bounty decision&lt;/li>
+&lt;/ul></description></item></channel></rss>

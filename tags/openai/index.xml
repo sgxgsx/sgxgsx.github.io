@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>OpenAI on yso infosec blog</title><link>https://blog.ys0.dev/tags/openai/</link><description>Recent content in OpenAI on yso infosec blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 14 May 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://blog.ys0.dev/tags/openai/index.xml" rel="self" type="application/rss+xml"/><item><title>Thoughts That Talk Back - How ChatGPT Quietly Doxxed Your Name</title><link>https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/</link><pubDate>Wed, 14 May 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/</guid><description>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/cover-chat-leak.png" alt="Featured image of post Thoughts That Talk Back - How ChatGPT Quietly Doxxed Your Name" />&lt;p>Sharing your chats has never been easier - you simply click &lt;strong>Share&lt;/strong>, the conversation is anonymised, and you’re clear to show what ChatGPT produced for you. There are no privacy implications - unless you pasted personal data into the chat itself, which OpenAI discourages.&lt;br>
+However, on &lt;strong>16th April 2025&lt;/strong> OpenAI rolled out two new reasoning models, &lt;strong>o3&lt;/strong> and &lt;strong>o4-mini&lt;/strong>, that &lt;em>unexpectedly leaked the profile name&lt;/em> associated with your OpenAI account.&lt;/p>
+&lt;p>The leak was model-side, not user-side: the model echoed the name inside its hidden &lt;strong>“thoughts”&lt;/strong> panel, so the disclosure went unnoticed unless someone expanded that view.&lt;/p>
+&lt;h2 id="example">Example
+&lt;/h2>&lt;p>Someone posted a share link on X/Twitter (account and URL redacted for privacy):&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/screenshot_a.png"
+width="1218"
+height="479"
+loading="lazy"
+alt="Twitter post with a shared chat"
+class="gallery-image"
+data-flex-grow="254"
+data-flex-basis="610px"
+>&lt;/p>
+&lt;p>Opening the link shows the banner &lt;em>“This is a copy of a conversation between ChatGPT &amp;amp; Anonymous.”&lt;/em>&lt;br>
+But after opening &lt;strong>Thought for 6 seconds&lt;/strong>, you can see the user’s first name - &lt;em>Artem&lt;/em>:&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/screenshot_b.png"
+width="1686"
+height="1530"
+loading="lazy"
+alt="Not that Anonymous chat"
+class="gallery-image"
+data-flex-grow="110"
+data-flex-basis="264px"
+>&lt;/p>
+&lt;h3 id="why-the-name-leaked">Why the name leaked
+&lt;/h3>&lt;ul>
+&lt;li>At inference time the model appears to have had access to an internal variable (likely via an API call) that contained the user’s display name.&lt;/li>
+&lt;li>That variable was reflected into the chain-of-thought.&lt;/li>
+&lt;li>Had other profile fields been available through the same path, the impact could have been worse, so the possibility is worth exploring.&lt;/li>
+&lt;/ul>
+&lt;h3 id="practical-risk">Practical risk
+&lt;/h3>&lt;p>There is &lt;strong>no risk&lt;/strong> &lt;em>unless&lt;/em> you want to remain as anonymous as advertised:&lt;/p>
+&lt;ul>
+&lt;li>If you shared a chat with &lt;strong>o3&lt;/strong> or &lt;strong>o4-mini&lt;/strong> between &lt;strong>16 - 18 April 2025&lt;/strong> and care about anonymity, delete the link.&lt;/li>
+&lt;li>The behaviour is no longer reproducible; engineers fixed it after discovering their own mistake.&lt;/li>
+&lt;/ul>
+&lt;h3 id="final-thoughts">Final Thoughts
+&lt;/h3>&lt;p>When it comes to reporting AI related bugs especially one really needs to clearly define the impact (even that might not be helpful) because as &lt;a class="link" href="https://josephthacker.com/hacking/2025/02/25/how-to-hack-ai-apps.html" target="_blank" rel="noopener"
+>Joseph Thacker said&lt;/a>:&lt;/p>
+&lt;p>&lt;em>“Many AI vulnerabilities are dismissed because their real-world impact is unclear. Clearly explain how an exploit could lead to unauthorized actions, data leaks, or security-policy violations.”&lt;/em>&lt;/p>
+&lt;h3 id="timeline">Timeline
+&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>16 Apr 2025 20:11 UTC&lt;/strong> – reported.&lt;/li>
+&lt;li>&lt;strong>18 Apr 2025 13:54 UTC&lt;/strong> – closed as &lt;em>Not Applicable&lt;/em> by Bugcrowd (not OpenAI), citing user responsibility for redacting private data.&lt;/li>
+&lt;li>&lt;strong>18 Apr 2025&lt;/strong> – Patch only for new chats deployed (unknown source and time)&lt;/li>
+&lt;li>&lt;strong>21 Apr 2025&lt;/strong> - closed again as N/A&lt;/li>
+&lt;li>&lt;strong>21 Apr 2025&lt;/strong> - Asked for OpenAI team response&lt;/li>
+&lt;li>&lt;strong>30 Apr 2025&lt;/strong> - Asked for OpenAI team response&lt;/li>
+&lt;li>&lt;strong>15 May 2025&lt;/strong> - Disclosed&lt;/li>
+&lt;/ul>
+&lt;h3 id="ps">P.S.
+&lt;/h3>&lt;p>This is a response I got from Bugcrowd, where they refer to OpenAI&amp;rsquo;s statement that the user should not share sensitive data in the chats they want to share publicly. Sounds right unless the sensitive content is shared by the model outside of user&amp;rsquo;s control:&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/bugcrowd_response.png"
+width="2191"
+height="860"
+loading="lazy"
+alt="Interesting assessment from Bugcrowd"
+class="gallery-image"
+data-flex-grow="254"
+data-flex-basis="611px"
+>&lt;/p></description></item></channel></rss>
