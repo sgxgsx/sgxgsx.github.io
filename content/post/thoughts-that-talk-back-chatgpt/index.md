@@ -1,7 +1,6 @@
 ---
 title: Thoughts That Talk Back - How ChatGPT Quietly Doxxed Your Name
-description: Sharing your chats has never been easier - you simply click **Share**, the conversation is anonymised, and you’re clear to show what ChatGPT produced for you. There are no privacy implications - unless you pasted personal data into the chat itself, which OpenAI discourages.  
-However, on **16th of April 2025** OpenAI rolled out two new reasoning models, **o3** and **o4-mini**, that _unexpectedly leaked the profile name_ associated with your OpenAI account.
+description: Sharing your chats has never been easier - you simply click **Share**, the conversation is anonymised, and you’re clear to show what ChatGPT produced for you. There are no privacy implications - unless you pasted personal data into the chat itself, which OpenAI discourages. However, on **16th of April 2025** OpenAI rolled out two new reasoning models, **o3** and **o4-mini**, that _unexpectedly leaked the profile name_ associated with your OpenAI account.
 slug: thoughts-that-talk-back-chatgpt
 date: 2025-05-15 00:00:00+0000
 image: cover-chat-leak.png
