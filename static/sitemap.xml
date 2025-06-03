@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Home page -->
+  <url>
+    <loc>https://blog.ys0.dev/</loc>
+    <lastmod>2025-06-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Example posts — add every published article here -->
+  <url>
+    <loc>https://blog.ys0.dev/thoughts-that-talk-back-how-chatgpt-quietly-doxxed-your-name</loc>
+    <lastmod>2025-05-20</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://blog.ys0.dev/overlooked-cors-misconfiguration-leads-to-csrf-on-swisscom</loc>
+    <lastmod>2025-02-24</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://blog.ys0.dev/bypassing-sms-otp-authentication-16k-bounty</loc>
+    <lastmod>2025-03-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Keep adding <url> blocks for every post -->
+</urlset>
+
